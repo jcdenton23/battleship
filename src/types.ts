@@ -1,3 +1,5 @@
+import { BattleshipModel } from './models/battleship';
+
 export enum CommandType {
   Register = 'reg',
   UpdateWinners = 'update_winners',
@@ -12,6 +14,26 @@ export enum CommandType {
   Turn = 'turn',
   Finish = 'finish',
 }
+
+export enum ShipType {
+  Small = 'small',
+  Medium = 'medium',
+  Large = 'large',
+  Huge = 'huge',
+}
+
+export enum AttackStatus {
+  Miss = 'miss',
+  Killed = 'killed',
+  Shot = 'shot',
+}
+
+export enum GameStatus {
+  Created = 'created',
+  InProgress = 'inProgress',
+  Complete = 'complete',
+}
+
 export interface RegistrationData {
   name: string;
   password: string;
@@ -42,6 +64,32 @@ export interface Room {
   roomUsers: RoomUser[];
 }
 
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface ShipData {
+  position: Position;
+  direction: boolean;
+  type: ShipType;
+  length: number;
+}
+
+export interface Player {
+  userId: UserIdentifier;
+  ships: BattleshipModel[] | null;
+  board: Map<string, BattleshipModel> | null;
+}
+
+export interface Game {
+  gameId: GameIdentifier;
+  players: Player[];
+  currentPlayer: UserIdentifier | null;
+  gameStatus: GameStatus;
+  winnerId?: UserIdentifier;
+}
+
 export interface Winner {
   name: UserName;
   wins: number;
@@ -51,3 +99,4 @@ export type ClientMessage = Message<object>;
 export type SessionId = string;
 export type UserIdentifier = string;
 export type UserName = string;
+export type GameIdentifier = string | number;

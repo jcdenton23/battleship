@@ -1,8 +1,11 @@
 import WebSocket from 'ws';
 import { CommandType, Message, SessionId } from '../types';
 import {
+  processPlayerAttack,
   processRegistration,
   processRoomCreation,
+  processShipAddition,
+  processUserJoiningRoom,
 } from './gameMessageHandlers';
 
 export const wsMessageHandler =
@@ -18,6 +21,15 @@ export const wsMessageHandler =
           break;
         case CommandType.CreateRoom:
           processRoomCreation(currentSessionId);
+          break;
+        case CommandType.AddUserToRoom:
+          processUserJoiningRoom(currentSessionId, message);
+          break;
+        case CommandType.AddShips:
+          processShipAddition(message);
+          break;
+        case CommandType.Attack:
+          processPlayerAttack(message);
           break;
         default:
           console.log(`Unknown command type: ${message?.type}`);
