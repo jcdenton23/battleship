@@ -60,6 +60,7 @@ export const createGameHandler = (roomId: string) => {
         currentPlayer: null,
         gameStatus: GameStatus.Created,
       });
+      console.log(`The game has been successfully created with ID: ${gameId}.`);
     }
   }
 };
@@ -94,6 +95,9 @@ export const addShipsHandler = (
       player?.userId === userId ? currentPlayerData : player
     ),
   });
+  console.log(
+    `The user's ships have been added to the game store. Game ID: ${gameId}.`
+  );
 };
 
 export const startGameHandler = (gameId: GameIdentifier) => {
@@ -137,6 +141,10 @@ export const startGameHandler = (gameId: GameIdentifier) => {
         type: CommandType.Turn,
         data: { currentPlayer },
       });
+
+      console.log(
+        `The game with ID ${gameId} is now in progress. Current player: ${currentPlayer}.`
+      );
     });
   }
 };
@@ -189,6 +197,10 @@ export const attackHandler = (
     },
   });
 
+  console.log(
+    `Attack by ${attackerId} on game ${gameId} at position (${x}, ${y}): ${attackStatus}`
+  );
+
   const gameFinished = opponentData?.ships?.every((ship) =>
     ship.checkSunkStatus()
   );
@@ -205,6 +217,8 @@ export const attackHandler = (
       gameStatus: GameStatus.Complete,
       winnerId: attackerId,
     });
+
+    console.log(`Game ${gameId} finished, The winner is: ${attackerId}`);
 
     if (winnersStore.has(attackerId)) {
       const winnerData = winnersStore.get(attackerId)!;

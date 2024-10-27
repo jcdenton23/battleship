@@ -12,6 +12,7 @@ const createUser = (
   const id = randomUUID();
   const user: User = { id, name, password, sessionId };
   userModel.addUser(id, user);
+  console.log(`New user created: ${name} (ID: ${id})`);
   return id;
 };
 
@@ -31,6 +32,11 @@ const sendRegistrationResponse = (
       errorText,
     },
   });
+  if (error) {
+    console.log(`Registration failed for ${name}: ${errorText}`);
+  } else {
+    console.log(`Registration successful for ${name} (ID: ${userId})`);
+  }
 };
 
 export const registerUser = (
@@ -40,6 +46,7 @@ export const registerUser = (
 ): void => {
   const { name, password } = data;
 
+  console.log(`Registration attempt for user: ${name}`);
   const existingUser = userModel.findUserByName(name);
 
   if (!existingUser) {
@@ -48,12 +55,14 @@ export const registerUser = (
     return;
   }
 
+  console.log(`User ${name} already exists. Attempting authentication...`);
+
   const isAuthenticated = userModel.authenticateUser(name, password);
   if (isAuthenticated) {
     const userId = userModel.updateUserSession(name, sessionId)!;
     sendRegistrationResponse(ws, name, userId);
     return;
   }
-
+  console.log(`Authentication failed for user: ${name}. Incorrect password.`);
   sendRegistrationResponse(ws, name, '0', true, 'The password is incorrect.');
 };

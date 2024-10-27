@@ -7,14 +7,20 @@ const getCurrentUser = (sessionId: SessionId) => {
   const currentUser = userModel.findUserBySessionId(sessionId);
   if (!currentUser) {
     console.error('Error: User does not exist. Please log in.');
+  } else {
+    console.log(
+      `Current user retrieved: ${currentUser.name} (ID: ${currentUser.id})`
+    );
   }
   return currentUser;
 };
 
 const filterAvailableRooms = () => {
-  return Array.from(roomsStore.values()).filter(
+  const availableRooms = Array.from(roomsStore.values()).filter(
     (room) => room?.roomUsers?.length <= 1
   );
+  console.log(`Available rooms filtered. Count: ${availableRooms.length}`);
+  return availableRooms;
 };
 
 export const generateRoomUpdateMessage = () => {
@@ -37,10 +43,13 @@ export const createNewRoom = (sessionId: SessionId) => {
   };
 
   roomsStore.set(roomId, newRoom);
-  console.log(`Room created successfully: ${roomId}`);
+  console.log(
+    `Room created successfully: ${roomId} by user: ${currentUser.name}`
+  );
 };
 
 export const addUserToExistingRoom = (sessionId: SessionId, roomId: string) => {
+  console.log(`Attempting to add user to room: ${roomId}`);
   const room = roomsStore.get(roomId);
   if (!room) {
     console.error('Error: Room not found. Please check the room ID.');
