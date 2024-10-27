@@ -1,6 +1,8 @@
 import { randomUUID } from 'crypto';
-import { Message, ClientMessage, SessionId, CommandType } from './types';
+import { Message, ClientMessage, SessionId } from './types';
 import WebSocket from 'ws';
+import { connectedClients } from './ws_server';
+import { generateRoomUpdateMessage } from './controllers/room';
 
 export const createSessionId = (): SessionId => {
   return `${randomUUID()}-${Date.now()}`;
@@ -20,4 +22,16 @@ export const sendMessageToClient = (
     id: 0,
   };
   webSocket.send(JSON.stringify(formattedMessage));
+};
+
+export const sendMessageToAllClients = (data: string) => {
+  for (const client of connectedClients.values()) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(data);
+    }
+  }
+};
+
+export const sendRoomInfoUpdate = () => {
+  sendMessageToAllClients(generateRoomUpdateMessage());
 };

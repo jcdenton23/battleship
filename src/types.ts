@@ -12,7 +12,6 @@ export enum CommandType {
   Turn = 'turn',
   Finish = 'finish',
 }
-
 export interface RegistrationData {
   name: string;
   password: string;
@@ -31,6 +30,21 @@ export interface User {
   name: UserName;
   password: string;
   sessionId: SessionId;
+}
+
+export interface RoomUser {
+  name: UserName;
+  index: UserIdentifier;
+}
+
+export interface Room {
+  roomId: number | string;
+  roomUsers: RoomUser[];
+}
+
+export interface Winner {
+  name: UserName;
+  wins: number;
 }
 
 export type ClientMessage = Message<object>;

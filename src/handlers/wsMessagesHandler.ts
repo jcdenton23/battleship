@@ -1,6 +1,9 @@
 import WebSocket from 'ws';
 import { CommandType, Message, SessionId } from '../types';
-import { processRegistration } from './gameMessageHandlers';
+import {
+  processRegistration,
+  processRoomCreation,
+} from './gameMessageHandlers';
 
 export const wsMessageHandler =
   (ws: WebSocket, currentSessionId: SessionId) =>
@@ -12,6 +15,9 @@ export const wsMessageHandler =
       switch (message?.type) {
         case CommandType.Register:
           processRegistration(ws, currentSessionId, message);
+          break;
+        case CommandType.CreateRoom:
+          processRoomCreation(currentSessionId);
           break;
         default:
           console.log(`Unknown command type: ${message?.type}`);

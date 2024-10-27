@@ -1,6 +1,7 @@
 import { registerUser } from '../controllers/registration';
+import { createNewRoom } from '../controllers/room';
 import { Message, SessionId } from '../types';
-import { parseClientMessage } from '../utils';
+import { parseClientMessage, sendRoomInfoUpdate } from '../utils';
 import WebSocket from 'ws';
 
 export const processRegistration = (
@@ -9,4 +10,10 @@ export const processRegistration = (
   message: Message
 ) => {
   registerUser(ws, currentSessionId, parseClientMessage(message));
+  sendRoomInfoUpdate();
+};
+
+export const processRoomCreation = (currentSessionId: SessionId) => {
+  createNewRoom(currentSessionId);
+  sendRoomInfoUpdate();
 };
