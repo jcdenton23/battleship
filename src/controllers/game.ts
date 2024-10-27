@@ -2,23 +2,22 @@ import { gameStore, roomsStore, winnersStore } from '../stores';
 import { randomUUID } from 'node:crypto';
 import {
   CommandType,
-  AttackStatus,
   ShipData,
   GameIdentifier,
   GameStatus,
   Player,
   Position,
   UserIdentifier,
+  SessionId,
 } from '../types';
-import {
-  addShipToGameBoard,
-  sendMessageToClient,
-  sendAdjacentAttackCoordinates,
-  sendToAllPlayers,
-} from '../utils';
+import { addShipToGameBoard, sendMessageToClient } from '../utils';
 import { connectedClients } from '../ws_server';
 import { userModel } from '../models/user';
 import { BattleshipModel } from '../models/battleship';
+import { botModel } from '../models/bot';
+import WebSocket from 'ws';
+import { singleplayerAttackHandler } from '../handlers/singleplayerAttackHandler';
+import { multiplayerAttackHandler } from '../handlers/multiplayerAttackHandler';
 
 export const createGameHandler = (roomId: string) => {
   const room = roomsStore.get(roomId);
@@ -113,7 +112,8 @@ export const startGameHandler = (gameId: GameIdentifier) => {
 
   if (allPlayersAddedShips) {
     const currentPlayerIndex = Math.floor(Math.random() * 2);
-    const currentPlayer = game.players[currentPlayerIndex]?.userId!;
+    const currentPlayer =
+      game.players[currentPlayerIndex]?.userId! ?? game.players[0]?.userId;
     gameStore.set(gameId, {
       ...game,
       currentPlayer,
@@ -139,7 +139,7 @@ export const startGameHandler = (gameId: GameIdentifier) => {
       });
       sendMessageToClient(ws, {
         type: CommandType.Turn,
-        data: { currentPlayer },
+        data: { currentPlayer: currentPlayer },
       });
 
       console.log(
@@ -149,14 +149,48 @@ export const startGameHandler = (gameId: GameIdentifier) => {
   }
 };
 
-export const attackHandler = (
+export const handleSinglePlayGame = (ws: WebSocket, sessionId: SessionId) => {
+  const user = userModel.findUserBySessionId(sessionId);
+  if (!user) {
+    console.error('User not found for single-play mode.');
+    return;
+  }
+  const gameId = randomUUID();
+
+  gameStore.set(gameId, {
+    gameId,
+    bot: botModel,
+    players: [
+      {
+        userId: user.id,
+        ships: null,
+        board: null,
+      },
+    ],
+    currentPlayer: user.id,
+    gameStatus: GameStatus.Created,
+  });
+
+  sendMessageToClient(ws, {
+    type: CommandType.CreateGame,
+    data: {
+      idGame: gameId,
+      idPlayer: user.id,
+    },
+  });
+
+  console.log(`The single game was created: ${gameId}`);
+};
+
+export const handleAttack = (
   gameId: GameIdentifier,
   shotPosition: Position,
   attackerId: UserIdentifier
 ) => {
   const game = gameStore.get(gameId);
+
   if (!game) {
-    console.error('Game not found!');
+    console.error(`Game with ID ${gameId} not found!`);
     return;
   }
 
@@ -164,75 +198,8 @@ export const attackHandler = (
     return;
   }
 
-  let nextCurrentPlayer: UserIdentifier = attackerId;
-  let attackStatus = AttackStatus.Miss;
-  const opponentData = game.players.find(
-    (player) => player.userId !== attackerId
-  )!;
-  const { x, y } = shotPosition;
-  const attackKey = `${x}:${y}`;
-  const ship = opponentData.board?.get(attackKey);
-
-  if (ship) {
-    const isHit = ship.registerHit(x, y);
-    if (!isHit) {
-      return;
-    }
-
-    attackStatus = AttackStatus.Shot;
-    if (ship.checkSunkStatus()) {
-      attackStatus = AttackStatus.Killed;
-      sendAdjacentAttackCoordinates(game, ship, attackerId);
-    }
-  } else {
-    nextCurrentPlayer = opponentData.userId;
-  }
-
-  sendToAllPlayers(game, {
-    type: CommandType.Attack,
-    data: {
-      position: shotPosition,
-      currentPlayer: attackerId,
-      status: attackStatus,
-    },
-  });
-
-  console.log(
-    `Attack by ${attackerId} on game ${gameId} at position (${x}, ${y}): ${attackStatus}`
-  );
-
-  const gameFinished = opponentData?.ships?.every((ship) =>
-    ship.checkSunkStatus()
-  );
-
-  if (gameFinished) {
-    sendToAllPlayers(game, {
-      type: CommandType.Finish,
-      data: {
-        winPlayer: attackerId,
-      },
-    });
-    gameStore.set(gameId, {
-      ...game,
-      gameStatus: GameStatus.Complete,
-      winnerId: attackerId,
-    });
-
-    console.log(`Game ${gameId} finished, The winner is: ${attackerId}`);
-
-    if (winnersStore.has(attackerId)) {
-      const winnerData = winnersStore.get(attackerId)!;
-      const wins = winnerData?.wins + 1;
-      winnersStore.set(attackerId, { ...winnerData, wins });
-    } else {
-      const winner = userModel.getUser(attackerId)!;
-      winnersStore.set(attackerId, { name: winner?.name, wins: 1 });
-    }
-  } else {
-    gameStore.set(gameId, { ...game, currentPlayer: nextCurrentPlayer });
-    sendToAllPlayers(game, {
-      type: CommandType.Turn,
-      data: { currentPlayer: nextCurrentPlayer },
-    });
-  }
+  const handleAttackMode = game.bot
+    ? singleplayerAttackHandler
+    : multiplayerAttackHandler;
+  handleAttackMode(game.gameId, shotPosition, attackerId);
 };

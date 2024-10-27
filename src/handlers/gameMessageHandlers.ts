@@ -1,14 +1,22 @@
 import {
   addShipsHandler,
-  attackHandler,
   createGameHandler,
+  handleAttack,
+  handleSinglePlayGame,
   startGameHandler,
 } from '../controllers/game';
 import { registerUser } from '../controllers/registration';
 import { addUserToExistingRoom, createNewRoom } from '../controllers/room';
 import { gameStore } from '../stores';
-import { GameStatus, Message, SessionId } from '../types';
 import {
+  CommandType,
+  GameStatus,
+  Message,
+  Position,
+  SessionId,
+} from '../types';
+import {
+  createRandomPositions,
   parseClientMessage,
   sendRoomInfoUpdate,
   sendWinnersUpdate,
@@ -56,9 +64,21 @@ export const processPlayerAttack = (message: Message) => {
     console.log('Invalid data for attack');
     return;
   }
-  attackHandler(gameId, { x, y }, indexPlayer);
+  let positions: Position = { x, y };
+  if (message?.type === CommandType.RandomAttack) {
+    positions = createRandomPositions();
+  }
+
+  handleAttack(gameId, positions, indexPlayer);
   const game = gameStore.get(gameId);
   if (game && game.gameStatus === GameStatus.Complete && game.winnerId) {
     sendWinnersUpdate();
   }
+};
+
+export const processSinglePlayerGame = (
+  ws: WebSocket,
+  currentSessionId: SessionId
+) => {
+  handleSinglePlayGame(ws, currentSessionId);
 };

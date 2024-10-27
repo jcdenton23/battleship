@@ -1,4 +1,5 @@
 import { BattleshipModel } from './models/battleship';
+import { Bot } from './models/bot';
 
 export enum CommandType {
   Register = 'reg',
@@ -13,6 +14,7 @@ export enum CommandType {
   RandomAttack = 'randomAttack',
   Turn = 'turn',
   Finish = 'finish',
+  SinglePlay = 'single_play',
 }
 
 export enum ShipType {
@@ -83,6 +85,7 @@ export interface Player {
 }
 
 export interface Game {
+  bot?: Bot | null;
   gameId: GameIdentifier;
   players: Player[];
   currentPlayer: UserIdentifier | null;

@@ -145,6 +145,12 @@ export const getAdjacentPositions = (ship: BattleshipModel): Position[] => {
   return Array.from(adjacentPositions.values());
 };
 
+export const createRandomPositions = (): Position => {
+  const x = Math.floor(Math.random() * 10);
+  const y = Math.floor(Math.random() * 10);
+  return { x, y };
+};
+
 export const sendAdjacentAttackCoordinates = (
   game: Game,
   ship: BattleshipModel,

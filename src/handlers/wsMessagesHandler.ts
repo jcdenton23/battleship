@@ -5,6 +5,7 @@ import {
   processRegistration,
   processRoomCreation,
   processShipAddition,
+  processSinglePlayerGame,
   processUserJoiningRoom,
 } from './gameMessageHandlers';
 
@@ -29,7 +30,11 @@ export const wsMessageHandler =
           processShipAddition(message);
           break;
         case CommandType.Attack:
+        case CommandType.RandomAttack:
           processPlayerAttack(message);
+          break;
+        case CommandType.SinglePlay:
+          processSinglePlayerGame(ws, currentSessionId);
           break;
         default:
           console.log(`Unknown command type: ${message?.type}`);
