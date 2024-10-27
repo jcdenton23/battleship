@@ -2,17 +2,20 @@ import { gameStore, roomsStore, winnersStore } from '../stores';
 import { randomUUID } from 'node:crypto';
 import {
   CommandType,
-  ClientMessage,
   AttackStatus,
   ShipData,
-  Game,
   GameIdentifier,
   GameStatus,
   Player,
   Position,
   UserIdentifier,
 } from '../types';
-import { addShipToGameBoard, sendMessageToClient } from '../utils';
+import {
+  addShipToGameBoard,
+  sendMessageToClient,
+  sendAdjacentAttackCoordinates,
+  sendToAllPlayers,
+} from '../utils';
 import { connectedClients } from '../ws_server';
 import { userModel } from '../models/user';
 import { BattleshipModel } from '../models/battleship';
@@ -171,6 +174,7 @@ export const attackHandler = (
     attackStatus = AttackStatus.Shot;
     if (ship.checkSunkStatus()) {
       attackStatus = AttackStatus.Killed;
+      sendAdjacentAttackCoordinates(game, ship, attackerId);
     }
   } else {
     nextCurrentPlayer = opponentData.userId;
@@ -217,13 +221,4 @@ export const attackHandler = (
       data: { currentPlayer: nextCurrentPlayer },
     });
   }
-};
-
-const sendToAllPlayers = (game: Game, message: ClientMessage) => {
-  game.players.forEach(({ userId }) => {
-    const userData = userModel.getUser(userId)!;
-    const ws = connectedClients.get(userData?.sessionId)!;
-
-    sendMessageToClient(ws, message);
-  });
 };

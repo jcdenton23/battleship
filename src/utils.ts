@@ -1,10 +1,20 @@
 import { randomUUID } from 'crypto';
-import { Message, ClientMessage, SessionId, CommandType } from './types';
+import {
+  Message,
+  ClientMessage,
+  SessionId,
+  CommandType,
+  Position,
+  Game,
+  AttackStatus,
+} from './types';
 import WebSocket from 'ws';
 import { BattleshipModel } from './models/battleship';
 import { connectedClients } from './ws_server';
 import { winnersStore } from './stores';
 import { generateRoomUpdateMessage } from './controllers/room';
+import { userModel } from './models/user';
+import { BOARD_SIZE, DIRECTIONS } from './constants';
 
 export const createSessionId = (): SessionId => {
   return `${randomUUID()}-${Date.now()}`;
@@ -81,4 +91,75 @@ export const sendWinnersUpdate = () => {
     id: 0,
   });
   sendMessageToAllClients(data);
+};
+
+export const sendToAllPlayers = (game: Game, message: ClientMessage) => {
+  game.players.forEach(({ userId }) => {
+    const userData = userModel.getUser(userId)!;
+    const ws = connectedClients.get(userData?.sessionId)!;
+
+    sendMessageToClient(ws, message);
+  });
+};
+
+const isValidPosition = (
+  x: number,
+  y: number,
+  shipCoords: Position[]
+): boolean => {
+  const isWithinBounds = x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
+  const isOccupied = shipCoords.some(
+    (shipPosition) => shipPosition.x === x && shipPosition.y === y
+  );
+  return isWithinBounds && !isOccupied;
+};
+
+export const getAdjacentPositions = (ship: BattleshipModel): Position[] => {
+  const adjacentPositions = new Map<string, Position>();
+  const { position, length, direction } = ship;
+  const shipCoordinates: Position[] = [];
+
+  for (let i = 0; i < length; i++) {
+    const coordinate: Position = direction
+      ? { x: position.x, y: position.y + i }
+      : { x: position.x + i, y: position.y };
+    shipCoordinates.push(coordinate);
+  }
+
+  shipCoordinates.forEach(({ x, y }) => {
+    for (const dx of DIRECTIONS) {
+      for (const dy of DIRECTIONS) {
+        const newX = x + dx;
+        const newY = y + dy;
+
+        if (isValidPosition(newX, newY, shipCoordinates)) {
+          const key = `${newX}:${newY}`;
+          if (!adjacentPositions.has(key)) {
+            adjacentPositions.set(key, { x: newX, y: newY });
+          }
+        }
+      }
+    }
+  });
+
+  return Array.from(adjacentPositions.values());
+};
+
+export const sendAdjacentAttackCoordinates = (
+  game: Game,
+  ship: BattleshipModel,
+  attackerId: string
+) => {
+  const adjacentCoordinates = getAdjacentPositions(ship);
+
+  adjacentCoordinates.forEach((coordinate) => {
+    sendToAllPlayers(game, {
+      type: CommandType.Attack,
+      data: {
+        position: coordinate,
+        currentPlayer: attackerId,
+        status: AttackStatus.Miss,
+      },
+    });
+  });
 };
