@@ -1,0 +1,30 @@
+{
+  "name": "ws_task",
+  "version": "1.0.0",
+  "description": "ws task",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "start:dev": "nodemon ./index.ts",
+    "start:prod": "npm run build && npm run start",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alisher Tashbulatov",
+  "keywords": [],
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.8.1",
+    "@types/ws": "^8.5.12",
+    "dotenv": "^16.4.5",
+    "nodemon": "^2.0.16",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "ws": "^8.8.0"
+  }
+}
