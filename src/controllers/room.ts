@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { roomsStore } from '../stores';
-import { SessionId, Room, RoomUser, CommandType } from '../types';
+import { SessionId, Room, CommandType } from '../types';
 import { userModel } from '../models/user';
 
 const getCurrentUser = (sessionId: SessionId) => {

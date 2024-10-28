@@ -1,4 +1,4 @@
-import { gameStore, roomsStore, winnersStore } from '../stores';
+import { gameStore, roomsStore } from '../stores';
 import { randomUUID } from 'node:crypto';
 import {
   CommandType,

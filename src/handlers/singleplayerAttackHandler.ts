@@ -21,15 +21,15 @@ export const singleplayerAttackHandler = (
     return;
   }
 
-  const battleBot = game.bot;
-  if (!battleBot) {
+  const battleshipBot = game.bot;
+  if (!battleshipBot) {
     console.error('The bot has not been created! Game id: ', game.gameId);
     return;
   }
 
   const { x, y } = shotPosition;
   const attackKey = `${x}:${y}`;
-  const ship = battleBot.board?.get(attackKey);
+  const ship = battleshipBot.board?.get(attackKey);
 
   const handleAttackResult = (
     targetPosition: Position,
@@ -82,7 +82,7 @@ export const singleplayerAttackHandler = (
 
     handleAttackResult(shotPosition, attackerId, attackStatus);
 
-    const isPlayerWin = battleBot.ships?.every((s) => s.checkSunkStatus());
+    const isPlayerWin = battleshipBot.ships?.every((s) => s.checkSunkStatus());
     checkVictory(isPlayerWin, attackerId);
   } else {
     handleAttackResult(
@@ -93,41 +93,44 @@ export const singleplayerAttackHandler = (
 
     sendToAllPlayers(game, {
       type: CommandType.Turn,
-      data: { currentPlayer: battleBot.botId },
+      data: { currentPlayer: battleshipBot.botId },
     });
 
     const playerData = game.players[0]!;
-    let battleBotTurn = true;
+    let battleshipBotTurn = true;
 
-    while (battleBotTurn) {
-      const battleBotShotPosition = battleBot.generateRandomShot();
-      const shotKey = `${battleBotShotPosition.x}:${battleBotShotPosition.y}`;
+    while (battleshipBotTurn) {
+      const battleshipBotShotPosition = battleshipBot.generateRandomShot();
+      const shotKey = `${battleshipBotShotPosition.x}:${battleshipBotShotPosition.y}`;
       const playerShip = playerData.board?.get(shotKey);
 
       if (
         playerShip &&
-        playerShip.registerHit(battleBotShotPosition.x, battleBotShotPosition.y)
+        playerShip.registerHit(
+          battleshipBotShotPosition.x,
+          battleshipBotShotPosition.y
+        )
       ) {
         const attackStatus = playerShip.checkSunkStatus()
           ? AttackStatus.Killed
           : AttackStatus.Shot;
 
         if (attackStatus === AttackStatus.Killed) {
-          handleShipSunk(playerShip, battleBot.botId);
+          handleShipSunk(playerShip, battleshipBot.botId);
         }
 
         handleAttackResult(
-          battleBotShotPosition,
-          battleBot.botId,
+          battleshipBotShotPosition,
+          battleshipBot.botId,
           attackStatus
         );
 
         const isBotWin = playerData.ships?.every((s) => s.checkSunkStatus())!;
-        checkVictory(isBotWin, battleBot.botId);
+        checkVictory(isBotWin, battleshipBot.botId);
       } else {
         handleAttackResult(
-          battleBotShotPosition,
-          battleBot.botId,
+          battleshipBotShotPosition,
+          battleshipBot.botId,
           AttackStatus.Miss
         );
 
@@ -135,7 +138,7 @@ export const singleplayerAttackHandler = (
           type: CommandType.Turn,
           data: { currentPlayer: attackerId },
         });
-        battleBotTurn = false;
+        battleshipBotTurn = false;
       }
     }
   }

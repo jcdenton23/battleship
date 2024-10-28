@@ -2,7 +2,6 @@ import { ShipData, ShipType } from './types';
 
 export const BOARD_SIZE = 10;
 export const DIRECTIONS = [-1, 0, 1];
-
 export const shipsData: Array<ShipData[]> = [
   [
     {
